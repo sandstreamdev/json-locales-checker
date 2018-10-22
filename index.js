@@ -7,14 +7,11 @@ const { promisify } = util;
 const readDirAsync = promisify(fs.readdir);
 const readFileAsync = promisify(fs.readFile);
 
-const laodFilesNames = async directoryPath => {
-  const filesNames = await readDirAsync(directoryPath);
-  return filesNames;
-};
+const laodFilesNames = async directoryPath => await readDirAsync(directoryPath);
 
 const loadFilesContent = async (filesNames, dir) => {
   const filesData = [];
-  const errorsList = [];
+  const duplicatedKeys = [];
 
   await Promise.all(
     filesNames.map(async fileName => {
@@ -28,7 +25,7 @@ const loadFilesContent = async (filesNames, dir) => {
 
         const duplicatedKey = await jsonValidator.validate(fileData, false);
         if (duplicatedKey) {
-          errorsList.push({
+          duplicatedKeys.push({
             type: '[DUPLICATED]',
             key: duplicatedKey,
             fileName: fileName
@@ -38,7 +35,7 @@ const loadFilesContent = async (filesNames, dir) => {
     })
   );
 
-  return [filesData, errorsList];
+  return [filesData, duplicatedKeys];
 };
 
 const getAllFilesData = async dir => {
@@ -68,14 +65,20 @@ const countKeysInFiles = keysList => {
 
 const countJsonFiles = filesData => filesData.length;
 
-const findBadKeys = (countedKeysList, countedFiles) => {
+const findBadKeys = (
+  countedKeysList,
+  countedFiles,
+  filesData,
+  duplicatedKeys
+) => {
+  const errors = [...duplicatedKeys];
   Object.keys(countedKeysList).forEach(key => {
     if (countedKeysList[key] < countedFiles) {
       for (const number in filesData) {
         const { fileData: singleFileData } = filesData[number];
         const { fileName } = filesData[number];
         if (key in singleFileData) {
-          errorsList.push({
+          errors.push({
             type: '[BAD]',
             key: key,
             fileName: fileName
@@ -84,25 +87,36 @@ const findBadKeys = (countedKeysList, countedFiles) => {
       }
     }
   });
+
+  return errors;
 };
 
-const printErrorMessages = errorsList => {
-  if (errorsList !== undefined && errorsList.length !== 0) {
-    errorsList.map(error => {
-      console.log(`${error.type} key: ${error.key} in => ${error.fileName}`);
+// Disable console usage linting errors as here error logging is performed.
+/* eslint-disable no-console */
+const printResult = errors => {
+  if (errors !== undefined && errors.length !== 0) {
+    errors.map(error => {
+      console.error(`${error.type} key: ${error.key} in => ${error.fileName}`);
     });
   } else {
     console.log('[OK]');
   }
 };
 
+/* eslint-enable no-console */
+
 compareLanguageKeys = async dir => {
-  const [filesData, errorsList] = await getAllFilesData(dir);
+  const [filesData, duplicatedKeys] = await getAllFilesData(dir);
   const keyList = createKeysList(filesData);
   const countedKeysList = countKeysInFiles(keyList);
   const countedFiles = countJsonFiles(filesData);
-  findBadKeys(countedKeysList, countedFiles);
-  printErrorMessages(errorsList);
+  const errors = findBadKeys(
+    countedKeysList,
+    countedFiles,
+    filesData,
+    duplicatedKeys
+  );
+  printResult(errors);
 };
 
-compareLanguageKeys('locales');
+compareLanguageKeys(process.argv[process.argv.length - 1]);
