@@ -16,8 +16,8 @@ const loadFilesContent = async (filesNames, dir) => {
   await Promise.all(
     filesNames.map(async fileName => {
       if (fileName.endsWith('.json')) {
-        fileData = await readFileAsync(`./${dir}/${fileName}`, 'utf8');
-        parsedFileData = await jsonValidator.parse(fileData, true);
+        const fileData = await readFileAsync(`./${dir}/${fileName}`, 'utf8');
+        const parsedFileData = await jsonValidator.parse(fileData, true);
         filesData.push({
           fileName,
           fileData: parsedFileData
@@ -105,7 +105,7 @@ const printResult = errors => {
 
 /* eslint-enable no-console */
 
-compareLanguageKeys = async dir => {
+const compareLanguageKeys = async dir => {
   const [filesData, duplicatedKeys] = await getAllFilesData(dir);
   const keyList = createKeysList(filesData);
   const countedKeysList = countKeysInFiles(keyList);
