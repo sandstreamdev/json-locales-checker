@@ -1,0 +1,6 @@
+{
+  "app.back_to_gallery_testing": "[TEST] Return to Gallery",
+  "app.back_to_home_testing_NOT_JSON": "[TEST] Return to Home Page",
+  "app.back_to_images_testing": "[TEST] Return to My Images",
+  "app.back_to_shared_folder_testing": "[TEST] Return to the shared folder"
+}
