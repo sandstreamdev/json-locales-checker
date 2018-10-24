@@ -7,17 +7,18 @@ const { promisify } = util;
 const readDirAsync = promisify(fs.readdir);
 const readFileAsync = promisify(fs.readFile);
 
-const laodFilesNames = async directoryPath => await readDirAsync(directoryPath);
+const loadFilesNames = async directoryPath => await readDirAsync(directoryPath);
 
 const loadFilesContent = async (filesNames, dir) => {
   const filesData = [];
   const duplicatedKeys = [];
 
   await Promise.all(
-    filesNames.map(async fileName => {
-      if (fileName.endsWith('.json')) {
+    filesNames
+      .filter(fileName => fileName.endsWith('.json'))
+      .map(async fileName => {
         const fileData = await readFileAsync(`./${dir}/${fileName}`, 'utf8');
-        const parsedFileData = await jsonValidator.parse(fileData, true);
+        const parsedFileData = await JSON.parse(fileData);
         filesData.push({
           fileName,
           fileData: parsedFileData
@@ -28,11 +29,10 @@ const loadFilesContent = async (filesNames, dir) => {
           duplicatedKeys.push({
             type: '[DUPLICATED]',
             key: duplicatedKey,
-            fileName: fileName
+            fileName
           });
         }
-      }
-    })
+      })
   );
 
   return [filesData, duplicatedKeys];
@@ -40,21 +40,18 @@ const loadFilesContent = async (filesNames, dir) => {
 
 const getAllFilesData = async dir => {
   const directoryPath = path.join(__dirname, dir);
-  const filesNames = await laodFilesNames(directoryPath);
+  const filesNames = await loadFilesNames(directoryPath);
   return await loadFilesContent(filesNames, dir);
 };
 
 const createKeysList = filesData => {
-  const keysList = [];
-  for (const key in filesData) {
-    const filesKeysList = filesData[key].fileData;
-    for (const key in filesKeysList) {
-      keysList.push(key);
-    }
-  }
-
-  return keysList;
+  return filesData
+    .map(data => {
+      return Object.keys(data.fileData);
+    })
+    .reduce((acc, curr) => [...acc, ...curr], []);
 };
+
 const countKeysInFiles = keysList => {
   const countedKeys = keysList.reduce((prev, cur) => {
     prev[cur] = (prev[cur] || 0) + 1;
@@ -72,21 +69,22 @@ const findBadKeys = (
   duplicatedKeys
 ) => {
   const errors = [...duplicatedKeys];
-  Object.keys(countedKeysList).forEach(key => {
-    if (countedKeysList[key] < countedFiles) {
+  Object.keys(countedKeysList)
+    .filter(key => countedKeysList[key] < countedFiles)
+    .forEach(key => {
+      // if (countedKeysList[key] < countedFiles) {
       for (const number in filesData) {
         const { fileData: singleFileData } = filesData[number];
         const { fileName } = filesData[number];
         if (key in singleFileData) {
           errors.push({
             type: '[BAD]',
-            key: key,
-            fileName: fileName
+            key,
+            fileName
           });
         }
       }
-    }
-  });
+    });
 
   return errors;
 };
@@ -102,8 +100,10 @@ const printResult = errors => {
     console.log('[OK]');
   }
 };
-
 /* eslint-enable no-console */
+
+const argument =
+  process.argv.length < 3 ? 'locales' : process.argv[process.argv.length - 1];
 
 const compareLanguageKeys = async dir => {
   const [filesData, duplicatedKeys] = await getAllFilesData(dir);
@@ -119,4 +119,15 @@ const compareLanguageKeys = async dir => {
   printResult(errors);
 };
 
-compareLanguageKeys(process.argv[process.argv.length - 1]);
+compareLanguageKeys(argument);
+
+export {
+  loadFilesNames,
+  loadFilesContent,
+  countKeysInFiles,
+  createKeysList,
+  findBadKeys,
+  countJsonFiles,
+  getAllFilesData,
+  printResult
+};
