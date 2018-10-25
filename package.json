@@ -1,0 +1,42 @@
+{
+  "name": "json-locales-checker",
+  "version": "0.0.1",
+  "description": "Script to compare keys between different files",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "prettier": "prettier --write \"index.js\""
+  },
+  "author": "Sandstream Development",
+  "license": "MIT",
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint",
+      "git add"
+    ],
+    "*.{js,css,md}": [
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "dependencies": {
+    "husky": "1.1.2",
+    "json-dup-key-validator": "1.0.2",
+    "lint-staged": "7.3.0"
+  },
+  "devDependencies": {
+    "babel-cli": "6.26.0",
+    "babel-preset-env": "1.7.0",
+    "eslint": "5.7.0",
+    "eslint-config-prettier": "3.1.0",
+    "eslint-plugin-dependencies": "2.4.0",
+    "eslint-plugin-import": "2.14.0",
+    "eslint-plugin-prettier": "3.0.0",
+    "prettier": "1.14.3"
+  }
+}
