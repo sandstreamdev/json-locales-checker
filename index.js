@@ -52,15 +52,11 @@ const createKeysList = filesData => {
     .reduce((acc, curr) => [...acc, ...curr], []);
 };
 
-const countKeysInFiles = keysList => {
-  const countedKeys = keysList.reduce((prev, cur) => {
+const countKeysInFiles = keysList =>
+  keysList.reduce((prev, cur) => {
     prev[cur] = (prev[cur] || 0) + 1;
     return prev;
   }, {});
-  return countedKeys;
-};
-
-const countJsonFiles = filesData => filesData.length;
 
 const findBadKeys = (
   countedKeysList,
@@ -72,7 +68,6 @@ const findBadKeys = (
   Object.keys(countedKeysList)
     .filter(key => countedKeysList[key] < countedFiles)
     .forEach(key => {
-      // if (countedKeysList[key] < countedFiles) {
       for (const number in filesData) {
         const { fileData: singleFileData } = filesData[number];
         const { fileName } = filesData[number];
@@ -109,10 +104,9 @@ const compareLanguageKeys = async dir => {
   const [filesData, duplicatedKeys] = await getAllFilesData(dir);
   const keyList = createKeysList(filesData);
   const countedKeysList = countKeysInFiles(keyList);
-  const countedFiles = countJsonFiles(filesData);
   const errors = findBadKeys(
     countedKeysList,
-    countedFiles,
+    filesData.length,
     filesData,
     duplicatedKeys
   );
@@ -127,7 +121,6 @@ export {
   countKeysInFiles,
   createKeysList,
   findBadKeys,
-  countJsonFiles,
   getAllFilesData,
   printResult
 };
